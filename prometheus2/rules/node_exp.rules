@@ -1,0 +1,12 @@
+groups:
+  - name: NodeExpDown
+    rules:
+      - alert: NodeExporterDown
+        expr: up{job="node_exporter"} < 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Node Exporter Down
+          description: The Node Exporter is not scraping values
+

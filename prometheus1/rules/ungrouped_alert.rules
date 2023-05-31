@@ -1,0 +1,12 @@
+groups:
+  - name: UnGrouped_Alert
+    rules:
+      - alert: ContainerStarted_Ungrouped
+        expr: up{job="prometheus"} == 1
+        for: 0s
+        labels:
+          severity: critical
+        annotations:
+          summary: Container Started
+          description: The container has started
+

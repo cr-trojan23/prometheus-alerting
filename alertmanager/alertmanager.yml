@@ -1,0 +1,38 @@
+route:
+  repeat_interval: 5m
+  receiver: 'mail'
+  routes:
+    - matchers:
+      - alertname=ContainerStarted_Grouped
+      receiver: 'mail'
+      group_by: ['alertname']
+      repeat_interval: 2m
+      continue: true
+
+    - matchers:
+        - alertname=ContainerStarted_Ungrouped
+      receiver: 'mail'
+      group_by: [...]
+      continue: true
+
+    - receiver: 'mail'
+      repeat_interval: 3m
+      matchers:
+        - alertname=NodeExporterDown
+      continue: true
+receivers:
+  - name: 'mail'
+    email_configs:
+      - smarthost: 'smtp.gmail.com:587'
+        from: 'your_email@gmail.com'
+        to: 'your_email@gmail.com'
+        auth_identity: 'your_email@gmail.com'
+        auth_username: 'your_email@gmail.com'
+        auth_password: 'insert_google_app_password'
+        require_tls: true
+
+  - name: 'slack'
+    webhook_configs:
+      - url: "https://example.com"
+        send_resolved: true
+
