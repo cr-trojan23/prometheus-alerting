@@ -91,6 +91,47 @@ The receiver configuration defines the settings for handling and sending alerts 
 
   - `send_resolved: true`: Determines whether resolved alerts should also be sent to Slack.
 
+## Prometheus Configuration
+
+The Prometheus configuration in the Docker Compose file defines the global settings, scrape configurations, alerting configuration, and rule files.
+
+### Global Configuration
+
+- `scrape_interval: 15s`: This setting specifies the interval at which Prometheus scrapes metrics from the configured targets.
+
+### Scrape Configurations
+
+Scrape configurations define the targets from which Prometheus collects metrics.
+
+- `job_name: 'prometheus'`: This scrape configuration is for the Prometheus server itself.
+
+  - `static_configs`: This section contains a list of static targets to be scraped.
+
+    - `targets: ['prometheus1:9090', 'prometheus2:9090', 'prometheus3:9090']`: Specifies the addresses of the Prometheus instances to be scraped. In this example, three instances with the given addresses will be scraped for metrics.
+
+- `job_name: 'node_exporter'`: This scrape configuration is for the Node Exporter service.
+
+  - `metrics_path: '/metrics'`: Specifies the endpoint path where Node Exporter exposes its metrics.
+
+  - `static_configs`: This section contains a list of static targets to be scraped.
+
+    - `targets: ['node_exporter:9100']`: Specifies the address of the Node Exporter instance to be scraped.
+
+### Alerting Configuration
+
+The alerting configuration defines the alertmanager's configuration and the targets it should forward alerts to.
+
+- `alertmanagers`: This section contains the configuration for the Alertmanager service.
+
+  - `static_configs`: This section contains a list of static targets to which alerts will be forwarded.
+
+    - `targets: ['alertmanager:9093']`: Specifies the address of the Alertmanager instance to which alerts will be forwarded.
+
+### Rule Files
+
+- `rule_files: - '/etc/prometheus/rules/*.rules'`: Specifies the location of rule files containing alerting and recording rules.
+
+
 
 
 
