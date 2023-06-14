@@ -1,4 +1,9 @@
 version: '3'
+volumes:
+  db_data:
+networks:
+  monitor:
+    driver: bridge
 
 services:
   prometheus1:
@@ -8,6 +13,8 @@ services:
       - ./prometheus1:/etc/prometheus
     ports:
       - 9090:9090
+    networks:
+      - monitor
     command: --config.file=/etc/prometheus/prometheus.yml
 
   prometheus2:
@@ -17,6 +24,8 @@ services:
       - ./prometheus2:/etc/prometheus
     ports:
       - 9091:9090
+    networks:
+      - monitor
     command: --config.file=/etc/prometheus/prometheus.yml
 
   prometheus3:
@@ -26,6 +35,8 @@ services:
       - ./prometheus3:/etc/prometheus
     ports:
       - 9092:9090
+    networks:
+      - monitor
     command: --config.file=/etc/prometheus/prometheus.yml
 
   alertmanager:
@@ -35,6 +46,8 @@ services:
       - ./alertmanager:/etc/alertmanager
     ports:
       - 9093:9093
+    networks:
+      - monitor
     command: --config.file=/etc/alertmanager/alertmanager.yml
 
   node-exporter:
@@ -46,8 +59,82 @@ services:
       - /:/rootfs:ro
     ports:
       - 9100:9100
+    networks:
+      - monitor
     command:
       - '--path.procfs=/host/proc'
       - '--path.rootfs=/rootfs'
       - '--path.sysfs=/host/sys'
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.1
+    container_name: cadvisor
+    privileged: true
+    ports:
+      - 8080:8080
+    networks:
+      - monitor
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /cgroup:/cgroup:ro
+    restart: unless-stopped  
+  proxy:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - 80:80
+    networks:
+      - monitor
+    volumes:
+      - ./conf/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - grafana1
+      - grafana2
+  grafana-db:
+    container_name: grafana-db
+    image: postgres:12-alpine
+    restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: grafana
+      POSTGRES_USER: grafana
+      POSTGRES_DB: grafana
+      PGDATA: /var/lib/postgresql/data/pgdata
+    networks:
+      - monitor
+  grafana1:
+    restart: always
+    container_name: grafana1
+    image: grafana/grafana
+    networks:
+      - monitor
+    expose:
+      - 3000
+    volumes:
+      - ./plugins:/var/lib/grafana/plugins
+      - ./conf/grafana.ini:/etc/grafana/grafana.ini
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - grafana2
+
+  grafana2:
+    restart: always
+    container_name: grafana2
+    image: grafana/grafana
+    networks:
+      - monitor
+    expose:
+      - 3000
+    volumes:
+      - ./plugins:/var/lib/grafana/plugins
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./conf/grafana.ini:/etc/grafana/grafana.ini
+    depends_on:
+      - grafana-db
+
